@@ -310,6 +310,7 @@ const  int GridX = 50;
 const  int GridY = 50;
 const  int GridZ = 50;
 std::vector<std::vector<std::vector<int>>> c3d, t3d;
+std::vector<std::vector<std::vector<int>>>::iterator CurrentCA, TempCA;
 
 int Rule[5][7][13][9];
 
@@ -317,6 +318,9 @@ void InitCA()
 {
 	c3d.resize(GridX + 5, std::vector<std::vector<int>>(GridY + 5, std::vector<int>(GridZ + 5, 0)));
 	t3d.resize(GridX + 1, std::vector<std::vector<int>>(GridY + 1, std::vector<int>(GridZ + 1, 0)));
+
+	CurrentCA = c3d.begin();
+	TempCA = t3d.begin();
 
 	// todo : make initial state
 	for (int z = 24; z <= 26; z++)
@@ -464,6 +468,7 @@ void DrawCA()
 				{
 					glm::mat4 model = glm::mat4(1.0f);
 					model = glm::translate(model, glm::vec3((float)x, (float)y, (float)z));
+					model = glm::scale(model, glm::vec3(0.999f, 0.999f, 0.999f));
 
 					glm::vec4 color = glm::vec4(1.0f);
 					switch (CellState)
@@ -479,6 +484,8 @@ void DrawCA()
 					ResourceManager::GetShader("cube").SetVector4f("color", color);
 					glDrawArrays(GL_TRIANGLES, 0, 36);
 
+					// add normals
+					model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
 					ResourceManager::GetShader("cube_outline").Use();
 					ResourceManager::GetShader("cube_outline").SetMatrix4f("model", model);
 					glDrawArrays(GL_TRIANGLES, 0, 36);

@@ -12,6 +12,9 @@ void main()
 	{
 		for (int j = i + 1; j < 4; j++)
 		{
+			vec4 pos1 = gl_in[i].gl_Position;
+			vec4 pos2 = gl_in[j].gl_Position;
+
 			int count = 0;
 			if (gl_in[i].gl_Position.x == gl_in[j].gl_Position.x) count++;			
 			if (gl_in[i].gl_Position.y == gl_in[j].gl_Position.y) count++;
@@ -28,3 +31,4 @@ void main()
 		}
 	}
 }
+
