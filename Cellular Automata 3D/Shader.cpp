@@ -79,7 +79,7 @@ void Shader::SetVector3f(const char* name, const glm::vec3& value)
 	glUniform3f(glGetUniformLocation(ID, name), value.x, value.y, value.z);
 }
 
-void Shader::SetVector4f(const char* name, glm::vec4& value)
+void Shader::SetVector4f(const char* name, const glm::vec4& value)
 {
 	glUniform4f(glGetUniformLocation(ID, name), value.x, value.y, value.z, value.w);
 }

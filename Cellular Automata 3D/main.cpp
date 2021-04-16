@@ -23,9 +23,10 @@ void processInput(GLFWwindow* window);
 
 // 3D cellular automata
 void InitCA();
-void ProcessCA();
+void ProcessCA(int z);
 void DrawCA();
 void DrawBorder();
+void Swap();
 bool BeginCA;
 
 // window settings
@@ -40,10 +41,16 @@ float Timer = 0.0f;
 float DrawTimer = 1.0f;
 
 // camera settings
-Camera camera(glm::vec3(25.0f, 25.0f, 50.0f));
+Camera camera(glm::vec3(25.0f, 25.0f, 90.0f));
 bool firstMouse = true;
 double lastX = (double)SCR_WIDTH / 2.0f;
 double lastY = (double)SCR_HEIGHT / 2.0f;
+
+// Cellular Automata
+const int GridX = 50;
+const int GridY = 50;
+const int GridZ = 50;
+int currentZ = 1;
 
 int main()
 {
@@ -95,6 +102,7 @@ int main()
 	// initialize 3D Cellular Automata
 	InitCA();
 
+
 	// render loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -115,16 +123,18 @@ int main()
 		if (BeginCA)
 		{
 			Timer += (float)deltaTime;
+			ProcessCA(currentZ);
+			currentZ = std::min(currentZ + 1, 50);
+
 			if (Timer >= DrawTimer)
 			{
-				ProcessCA();
+				Swap();
+				currentZ = 1;
 				Timer = 0.0f;
 			}
 		}
 
-		// projection matrix
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-		// camera/view transformation
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
 		glm::mat4 view = camera.GetViewMatrix();
 
 		ResourceManager::GetShader("cube").Use();
@@ -135,8 +145,8 @@ int main()
 		ResourceManager::GetShader("cube_outline").SetMatrix4f("projection", projection);
 		ResourceManager::GetShader("cube_outline").SetMatrix4f("view", view);
 
-		DrawCA();
 		DrawBorder();
+		DrawCA();
 
 
 		// check and call events and swap the buffers
@@ -264,9 +274,8 @@ void Init()
 	ResourceManager::LoadShader("shaders/cube.vert", "shaders/cube.frag", nullptr, "cube");
 
 	// configure shaders
-	glm::vec4 BorderColor = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
 	ResourceManager::GetShader("cube_outline").Use();
-	ResourceManager::GetShader("cube_outline").SetVector4f("color", BorderColor);
+	ResourceManager::GetShader("cube_outline").SetVector4f("color", glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 }
 
 void processInput(GLFWwindow* window)
@@ -306,44 +315,26 @@ void processInput(GLFWwindow* window)
 
 */
 
-const  int GridX = 50;
-const  int GridY = 50;
-const  int GridZ = 50;
-std::vector<std::vector<std::vector<int>>> c3d, t3d;
-std::vector<std::vector<std::vector<int>>>::iterator CurrentCA, TempCA;
+std::vector<std::vector<std::vector<int>>> mat1, mat2;
 
 int Rule[5][7][13][9];
 
 void InitCA()
 {
-	c3d.resize(GridX + 5, std::vector<std::vector<int>>(GridY + 5, std::vector<int>(GridZ + 5, 0)));
-	t3d.resize(GridX + 1, std::vector<std::vector<int>>(GridY + 1, std::vector<int>(GridZ + 1, 0)));
-
-	CurrentCA = c3d.begin();
-	TempCA = t3d.begin();
+	mat1.resize(GridX + 2, std::vector<std::vector<int>>(GridY + 2, std::vector<int>(GridZ + 2, 0)));
+	mat2.resize(GridX + 2, std::vector<std::vector<int>>(GridY + 2, std::vector<int>(GridZ + 2, 0)));
 
 	// todo : make initial state
-	for (int z = 24; z <= 26; z++)
+	for (int z = 1; z <= 5; z++)
 	{
-		for (int y = 24; y <= 26; y++)
+		for (int y = 1; y <= 5; y++)
 		{
-			for (int x = 24; x <= 26; x++)
+			for (int x = 1; x <= 5; x++)
 			{
-				c3d[x][y][z] = 4;
+				mat1[x][y][z] = 4;
 			}
 		}
 	}
-
-
-	// c3d[5][5][5] = 4;
-	/*
-	c3d[4][5][5] = 4;
-	c3d[6][5][5] = 4;
-	c3d[5][4][5] = 4;
-	c3d[5][6][5] = 4;
-	c3d[5][5][4] = 4;
-	c3d[5][5][6] = 4;
-	*/
 
 	// fill Rule
 	// todo : defined rules
@@ -382,31 +373,31 @@ void InitCA()
 	}
 }
 
-void ProcessCA()
+void ProcessCA(int z)
 {
-	for (int z = 1; z <= GridZ; z++)
+	// for (int z = startZ; z <= endZ; z++)
 	{
 		for (int y = 1; y <= GridY; y++)
 		{
 			for (int x = 1; x <= GridX; x++)
 			{	
-				int CellState = c3d[x][y][z];
-				t3d[x][y][z] = CellState;
+				int CellState = mat1[x][y][z];
+				mat2[x][y][z] = CellState;
 
 				if (CellState > 0)
 				{
-					t3d[x][y][z]--;
+					mat2[x][y][z]--;
 				}
 				else if (CellState == 0)
 				{
 					// faces
 					int FaceCount = 0;
-					if (c3d[x][y][z - 1] > 0) FaceCount++;
-					if (c3d[x][y][z + 1] > 0) FaceCount++;
-					if (c3d[x][y - 1][z] > 0) FaceCount++;
-					if (c3d[x][y + 1][z] > 0) FaceCount++;
-					if (c3d[x - 1][y][z] > 0) FaceCount++;
-					if (c3d[x + 1][y][z] > 0) FaceCount++;
+					if (mat1[x][y][z - 1] > 0) FaceCount++;
+					if (mat1[x][y][z + 1] > 0) FaceCount++;
+					if (mat1[x][y - 1][z] > 0) FaceCount++;
+					if (mat1[x][y + 1][z] > 0) FaceCount++;
+					if (mat1[x - 1][y][z] > 0) FaceCount++;
+					if (mat1[x + 1][y][z] > 0) FaceCount++;
 
 					if (FaceCount > 0)
 					{
@@ -414,77 +405,78 @@ void ProcessCA()
 						int CornerCount = 0;
 
 						//edges
-						if (c3d[x][y - 1][z - 1] > 0) EdgeCount++;
-						if (c3d[x - 1][y][z - 1] > 0) EdgeCount++;
-						if (c3d[x + 1][y][z - 1] > 0) EdgeCount++;
-						if (c3d[x][y + 1][z - 1] > 0) EdgeCount++;
-						if (c3d[x - 1][y - 1][z] > 0) EdgeCount++;
-						if (c3d[x + 1][y - 1][z] > 0) EdgeCount++;
-						if (c3d[x - 1][y + 1][z] > 0) EdgeCount++;
-						if (c3d[x + 1][y + 1][z] > 0) EdgeCount++;
-						if (c3d[x][y - 1][z + 1] > 0) EdgeCount++;
-						if (c3d[x - 1][y][z + 1] > 0) EdgeCount++;
-						if (c3d[x + 1][y][z + 1] > 0) EdgeCount++;
-						if (c3d[x][y + 1][z + 1] > 0) EdgeCount++;
+						if (mat1[x][y - 1][z - 1] > 0) EdgeCount++;
+						if (mat1[x - 1][y][z - 1] > 0) EdgeCount++;
+						if (mat1[x + 1][y][z - 1] > 0) EdgeCount++;
+						if (mat1[x][y + 1][z - 1] > 0) EdgeCount++;
+						if (mat1[x - 1][y - 1][z] > 0) EdgeCount++;
+						if (mat1[x + 1][y - 1][z] > 0) EdgeCount++;
+						if (mat1[x - 1][y + 1][z] > 0) EdgeCount++;
+						if (mat1[x + 1][y + 1][z] > 0) EdgeCount++;
+						if (mat1[x][y - 1][z + 1] > 0) EdgeCount++;
+						if (mat1[x - 1][y][z + 1] > 0) EdgeCount++;
+						if (mat1[x + 1][y][z + 1] > 0) EdgeCount++;
+						if (mat1[x][y + 1][z + 1] > 0) EdgeCount++;
 
 						//corners
-						if (c3d[x - 1][y - 1][z - 1] > 0) CornerCount++;
-						if (c3d[x + 1][y - 1][z - 1] > 0) CornerCount++;
-						if (c3d[x - 1][y + 1][z - 1] > 0) CornerCount++;
-						if (c3d[x + 1][y + 1][z - 1] > 0) CornerCount++;
-						if (c3d[x - 1][y - 1][z + 1] > 0) CornerCount++;
-						if (c3d[x + 1][y - 1][z + 1] > 0) CornerCount++;
-						if (c3d[x - 1][y + 1][z + 1] > 0) CornerCount++;
-						if (c3d[x + 1][y + 1][z + 1] > 0) CornerCount++;
+						if (mat1[x - 1][y - 1][z - 1] > 0) CornerCount++;
+						if (mat1[x + 1][y - 1][z - 1] > 0) CornerCount++;
+						if (mat1[x - 1][y + 1][z - 1] > 0) CornerCount++;
+						if (mat1[x + 1][y + 1][z - 1] > 0) CornerCount++;
+						if (mat1[x - 1][y - 1][z + 1] > 0) CornerCount++;
+						if (mat1[x + 1][y - 1][z + 1] > 0) CornerCount++;
+						if (mat1[x - 1][y + 1][z + 1] > 0) CornerCount++;
+						if (mat1[x + 1][y + 1][z + 1] > 0) CornerCount++;
 
 						// update Temp Grid
-						t3d[x][y][z] = Rule[CellState][FaceCount][EdgeCount][CornerCount];
+						mat2[x][y][z] = Rule[CellState][FaceCount][EdgeCount][CornerCount];
 					}
 				}
 			}
 		}
 	}
+}
 
-	// todo
-	// c3d = t3d;
+void Swap()
+{
 	for (int z = 1; z <= GridZ; z++)
 		for (int y = 1; y <= GridY; y++)
 			for (int x = 1; x <= GridX; x++)
-				c3d[x][y][z] = t3d[x][y][z];
+				mat1[x][y][z] = mat2[x][y][z];
 }
 
 void DrawCA()
 {
-	// model matrix
+	// todo : Instancing
+
 	for (int z = 1; z <= GridZ; z++)
 	{
 		for (int y = 1; y <= GridY; y++)
 		{
 			for (int x = 1; x <= GridX; x++)
 			{
-				int CellState = c3d[x][y][z];
+				int CellState = mat1[x][y][z];
 
 				if (CellState > 0)
 				{
-					glm::mat4 model = glm::mat4(1.0f);
-					model = glm::translate(model, glm::vec3((float)x, (float)y, (float)z));
-					model = glm::scale(model, glm::vec3(0.999f, 0.999f, 0.999f));
-
 					glm::vec4 color = glm::vec4(1.0f);
 					switch (CellState)
 					{
-						case 1: color = glm::vec4(1.0f, 0.082f, 0.0f, 1.0f); break;
+						case 1: color = glm::vec4(0.589f, 0.082f, 0.0f, 1.0f); break;
 						case 2: color = glm::vec4(1.0f, 0.501f, 0.0f, 1.0f); break;
 						case 3: color = glm::vec4(1.0f, 0.647f, 0.0f, 1.0f); break;
 						case 4: color = glm::vec4(1.0f, 0.749f, 0.0f, 1.0f); break;
 					}
+
+					glm::mat4 model = glm::mat4(1.0f);
+					model = glm::translate(model, glm::vec3((float)x, (float)y, (float)z));
+					model = glm::scale(model, glm::vec3(0.997f, 0.997f, 0.997f));
 
 					ResourceManager::GetShader("cube").Use();
 					ResourceManager::GetShader("cube").SetMatrix4f("model", model);
 					ResourceManager::GetShader("cube").SetVector4f("color", color);
 					glDrawArrays(GL_TRIANGLES, 0, 36);
 
-					// add normals
 					model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
 					ResourceManager::GetShader("cube_outline").Use();
 					ResourceManager::GetShader("cube_outline").SetMatrix4f("model", model);
@@ -497,6 +489,14 @@ void DrawCA()
 
 void DrawBorder()
 {
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(GridX / 2.0f, GridY / 2.0f, GridZ / 2.0f));
+	model = glm::scale(model, glm::vec3((float)GridX, (float)GridY, (float)GridZ));
 
+	ResourceManager::GetShader("cube_outline").Use();
+	ResourceManager::GetShader("cube_outline").SetMatrix4f("model", model);
+	ResourceManager::GetShader("cube_outline").SetVector4f("color", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	ResourceManager::GetShader("cube_outline").SetVector4f("color", glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 }
 

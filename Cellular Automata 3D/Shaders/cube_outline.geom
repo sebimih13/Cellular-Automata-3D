@@ -3,6 +3,7 @@
 layout (triangles) in;
 layout (line_strip, max_vertices = 4) out;
 
+uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
@@ -22,9 +23,9 @@ void main()
 
 			if (count == 2)
 			{
-				gl_Position = projection * view * gl_in[i].gl_Position;
+				gl_Position = projection * view * model * gl_in[i].gl_Position;
 				EmitVertex();
-				gl_Position = projection * view * gl_in[j].gl_Position;
+				gl_Position = projection * view * model * gl_in[j].gl_Position;
 				EmitVertex();
 				EndPrimitive();
 			}
