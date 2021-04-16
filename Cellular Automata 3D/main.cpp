@@ -164,7 +164,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		glfwSetWindowShouldClose(window, true);
 
 	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS)
-		BeginCA = true;
+		BeginCA = !BeginCA;
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
