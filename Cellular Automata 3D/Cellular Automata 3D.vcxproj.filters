@@ -58,5 +58,7 @@
     <None Include="Shaders\cube_outline.frag" />
     <None Include="Shaders\cube_outline.geom" />
     <None Include="Shaders\cube.geom" />
+    <None Include="Shaders\cube_instanced.vert" />
+    <None Include="Shaders\cube_instanced.frag" />
   </ItemGroup>
 </Project>

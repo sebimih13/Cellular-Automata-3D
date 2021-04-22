@@ -23,7 +23,7 @@ void processInput(GLFWwindow* window);
 
 // 3D cellular automata
 void InitCA();
-void ProcessCA(int z);
+void ProcessCA();
 void DrawCA();
 void DrawBorder();
 void Swap();
@@ -123,7 +123,7 @@ int main()
 		if (BeginCA)
 		{
 			Timer += (float)deltaTime;
-			ProcessCA(currentZ);
+			ProcessCA();
 			currentZ = std::min(currentZ + 1, 50);
 
 			if (Timer >= DrawTimer)
@@ -325,11 +325,11 @@ void InitCA()
 	mat2.resize(GridX + 2, std::vector<std::vector<int>>(GridY + 2, std::vector<int>(GridZ + 2, 0)));
 
 	// todo : make initial state
-	for (int z = 1; z <= 5; z++)
+	for (int z = 24; z <= 26; z++)
 	{
-		for (int y = 1; y <= 5; y++)
+		for (int y = 24; y <= 26; y++)
 		{
-			for (int x = 1; x <= 5; x++)
+			for (int x = 24; x <= 26; x++)
 			{
 				mat1[x][y][z] = 4;
 			}
@@ -373,9 +373,9 @@ void InitCA()
 	}
 }
 
-void ProcessCA(int z)
+void ProcessCA()
 {
-	// for (int z = startZ; z <= endZ; z++)
+	for (int z = 1; z <= GridZ; z++)
 	{
 		for (int y = 1; y <= GridY; y++)
 		{
